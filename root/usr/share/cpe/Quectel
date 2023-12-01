@@ -435,7 +435,7 @@ Quectel_AT()
     OX=$( sendat $ATPORT 'AT+QNWPREFCFG="mode_pref"'  | grep "+QNWPREFCFG:"  )
     QNWP=$(echo $OX | grep -o -i "+QNWPREFCFG: \"MODE_PREF\",[A-Z5:]\+" | cut -d, -f2)
 
-    #�¶�
+   
     OX=$( sendat $ATPORT 'AT+QTEMP'  | grep "+QTEMP:"  )
     QTEMP=$(echo $OX | grep -o -i "+QTEMP: [0-9]\{1,3\}")
     if [ -z "$QTEMP" ]; then

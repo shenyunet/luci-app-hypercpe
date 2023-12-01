@@ -37,7 +37,7 @@ SETData()
         echo $quectel_device_id
         echo $COPS #运营商
         echo 'ttyUSB2' #端口
-        echo $TEMP #温度
+        echo $QTEMP #温度
         echo 'QMI' #协议 
         echo '---------------------------------'
         echo $IMEI #imei
