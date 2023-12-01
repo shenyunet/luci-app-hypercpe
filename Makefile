@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 #软件包名
 PKG_NAME:=luci-app-hypercpe
 #软件包版本
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 #真正编译当前软件包的目录
 PKG_BUILD_DIR:= $(BUILD_DIR)/$(PKG_NAME)
  
