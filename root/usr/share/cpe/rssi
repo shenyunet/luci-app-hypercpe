@@ -16,7 +16,7 @@ InitData()
 	NETMODE="-"
 	LBAND="-"
 	PCI="-"
-	CTEMP="-"
+	QTEMP="-"
 	MODE="-"
 	SINR="-"
 	IMEI='-'
@@ -34,7 +34,7 @@ SETData()
     {
         echo $Model #'RM520N-GL'
         echo $conntype #'conntype'
-        echo '1e0e:9001'
+        echo $quectel_device_id
         echo $COPS #运营商
         echo 'ttyUSB2' #端口
         echo $TEMP #温度
@@ -86,38 +86,51 @@ ATPORT=2
 AUTO_CPE() {
     Debug "------------------------------端口$ATPORT---------------------------"
     Debug "AUTO_CPE"
-
-    if ! sendat $ATPORT "AT" 500 | grep -q OK; then
-        Debug "Device not ready"
+    Date=$(date "+%Y-%m-%d %H:%M:%S")
+    quectel_device_id=$(lsusb | grep -i "Quectel" | awk '{print $6}')
+    Debug "Quectel 设备 ID: $quectel_device_id"
+    # 检测设备是否准备好
+    if sendat $ATPORT "AT" 500 | grep -q "OK"; then
+        sleep 1s
+    else
+        Debug "设备未准备好"
         sleep 5s
         return
     fi
 
     Debug "读取模块信息 计算模块"
     ATATI=$(sendat $ATPORT "ATI")
-    conntype=$(echo "$ATATI" | sed -n '2p')
+    Getconntype=$(echo "$ATATI" | sed -n '2p')
 
-    if [ -z "$conntype" ]; then
-        Debug "No connection type found"
+    if [ -z "$Getconntype" ]; then
+        Debug "无法获取模块类型"
         sleep 5s
         return
     fi
 
-    if ! cpin=$(sendat $ATPORT "at+cpin?") || echo "$cpin" | grep -q "ERROR"; then
-        Debug "No SIM or Error"
+    conntype=$Getconntype
+    Model=$(echo "$ATATI" | sed -n '3p')
+
+    # 检查 SIM 卡状态
+    cpin=$(sendat $ATPORT "at+cpin?")
+    if echo "$cpin" | grep -q "ERROR"; then
+        Debug "No SIM or SIM Error"
         sleep 5s
         return
     elif ! echo "$cpin" | grep -q "READY"; then
         Debug "SIM Locked or Not Ready"
         sleep 5s
         return
-    fi
-    Debug "SIM Ready"
-
-    if echo "$conntype" | grep -qi "Quectel"; then
-        Quectel_AT || Debug "Quectel_AT command failed"
     else
-        Debug "Unsupported module type"
+        Debug "SIM Ready"
+    fi
+
+    # 根据模块类型执行相应命令或设置不支持的模块消息
+    if echo $conntype | grep -qi "Quectel"; then
+        Quectel_AT
+    else
+        Model="不支持的模块"
+        Debug "$Model"
     fi
 }
 
@@ -125,16 +138,30 @@ AUTO_CPE() {
 modem_reset() {
     echo "Abnormal network restart"
 
+    # 停止 modem 服务
     /etc/init.d/modem stop || echo "Failed to stop modem service."
-
+    killall quectel-CM
+    # 发送 AT 命令重置 modem
     sendat $ATPORT "AT+CFUN=1,1" || echo "Failed to send AT+CFUN=1,1 command."
 
-    sleep 45s
+    # 等待 modem 重置
+    sleep 10s
 
-    /etc/init.d/modem start || echo "Failed to start modem service."
-
-    sleep 5s
+    # 无限循环，直到检测到 Quectel 设备
+    while true; do
+        if lsusb | grep -qi "Quectel"; then
+            echo "Quectel device detected."
+            # 启动 modem 服务
+            sleep 8s
+            /etc/init.d/modem start || echo "Failed to start modem service."
+            break  # 检测到设备后跳出循环
+        else
+            echo "Waiting for Quectel device..."
+            sleep 1s  # 等待 1 秒后再次检测
+        fi
+    done
 }
+
 #检测SIM卡是否插入,10次检测不到则重启模块
 check_sim() {
     while true; do
@@ -167,21 +194,22 @@ check_firstdns() {
         en1=$(uci -q get modem.@ndis[0].en)
         if [ "$enabled" -eq 1 ] && [ "$en1" -eq 1 ]; then
             echo "------------------------------开启任务---------------------------"
-            ipadd=$(uci -q get modem.@ndis[0].ipaddress)
+            urls=("http://wifi.vivo.com.cn/generate_204" "http://www.gstatic.com/generate_204")
             success=0
-            for i in 1 2 3 4 5; do
-                if ping -I wwan0 -c 1 -w 3 "$ipadd" > /dev/null 2>&1; then
+            for url in "${urls[@]}"; do
+                if curl -4 --interface wwan0 -I "$url" 2>/dev/null | grep -q "HTTP/.* 204"; then
+                    echo "网络连接正常"
                     success=1
                     break
                 fi
             done
 
             if [ $success -eq 1 ]; then
-                echo "网络连接正常" 
+                echo "网络连接正常"
                 xx=0
                 return
             else
-                echo "网络连接异常 $ipadd"
+                echo "网络连接异常"
                 xx=$((xx + 1))
                 if [ $xx -eq 5 ]; then
                     echo "Attempting to reset modem due to network connection issue."
@@ -196,24 +224,25 @@ check_firstdns() {
     done
 }
 
+
 #检测网络状态
 check_dns() {
     en1=$(uci -q get modem.@ndis[0].en)
     if [ "$en1" = '1' ]; then
         echo "------------------------------开启任务---------------------------"
-        ipadd=$(uci -q get modem.@ndis[0].ipaddress)
+        # 使用 curl 检查 HTTP 状态码
+        urls=("http://wifi.vivo.com.cn/generate_204" "http://www.gstatic.com/generate_204")
         success=0
-        for i in 1 2 3 4 5; do
-            if ping -c 1 -w 3 "$ipadd" > /dev/null 2>&1; then  
-                echo "网络连接正常" 
-                xx=0
+        for url in "${urls[@]}"; do
+            if curl -4 --interface wwan0  -I "$url" 2>/dev/null | grep -q "HTTP/.* 204"; then
+                echo "网络连接正常"
                 success=1
                 break
             fi
         done
 
         if [ $success -eq 0 ]; then
-            echo "网络连接异常 $ipadd 次数$xx" 
+            echo "网络连接异常"
             xx=$((xx + 1))
             if [ $xx -eq $(uci -q get modem.@ndis[0].an) ]; then
                 xx=0
