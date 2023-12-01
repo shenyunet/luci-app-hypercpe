@@ -1,0 +1,62 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2014 OpenWrt.org
+
+START=16
+STOP=16
+USE_PROCD=1
+
+# 运行模块配置
+runModem() {
+    local enabled
+    config_get_bool enabled "$1" enabled
+    echo "run runModem" >> /tmp/log4g
+
+    if [ "$enabled" = "1" ]; then
+        local user password apn auth pincode device tool pdptype tty atcmd
+        local devname devpath ifname pdptype_flag
+
+        config_get user "$1" user
+        config_get password "$1" password
+        config_get apn "$1" apn
+        config_get auth "$1" auth
+        config_get pincode "$1" pincode
+        config_get device "$1" device
+        config_get tool "$1" tool
+        config_get pdptype "$1" pdptype
+        config_get tty "$1" tty
+        config_get atcmd "$1" atcmd
+
+        pdptype_flag=""
+        case "$pdptype" in
+            "IPV4V6") pdptype_flag='-4 -6' ;;
+            "IPV6") pdptype_flag='-6' ;;
+        esac
+
+        devname="$(basename "$device")"
+        devpath="$(readlink -f /sys/class/usbmisc/$devname/device/)"
+        ifname="$( ls "$devpath"/net )"
+
+        procd_open_instance
+        procd_set_param command "$tool" -i "$ifname" -s "$apn" $pdptype_flag
+        [ -n "$password" ] && procd_append_param command "$user" "$password" "$auth"
+        [ -n "$pincode" ] && procd_append_param command -p "$pincode"
+        procd_set_param respawn
+        echo "quectel-CM has started."
+        procd_close_instance
+    fi
+}
+
+service_triggers() {
+    procd_add_reload_trigger "modem"
+}
+
+start_service() {
+    config_load modem
+    config_foreach runModem ndis
+}
+
+stop_service() {
+    echo "runModem stop" >> /tmp/log4g
+    killall quectel-CM  # 考虑使用更精确的方法来停止服务
+    echo "quectel-CM has stopped."
+}
