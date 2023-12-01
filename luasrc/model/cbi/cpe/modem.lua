@@ -63,7 +63,7 @@ en.rmempty = false
 
 
 ipaddress= s2:option(Value, "ipaddress", translate("Ping IP address"))
-ipaddress.default = "114.114.114.114"
+ipaddress.default = "119.29.29.29"
 ipaddress.rmempty=false
 
 an = s2:option(Value, "an", translate("Abnormal number"))
