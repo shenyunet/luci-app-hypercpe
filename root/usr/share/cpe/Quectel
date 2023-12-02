@@ -371,40 +371,52 @@ if [[ -n "$QTEMP" ]]; then
 fi
 
 
-OX=$(sendat $ATPORT "AT+QRSRP" | grep "+QRSRP:")
-QRSRP=$(echo "$OX" | awk -F, '/\+QRSRP:/ {print $1,$2,$3,$4,$5}')
-
-if [ -n "$QRSRP" ] && [ "$RAT" != "WCDMA" ]; then
-    read -r QRSRP1 QRSRP2 QRSRP3 QRSRP4 QRSRPtype <<< "$QRSRP"
-
-    if [ "$QRSRPtype" == "NR5G" ]; then
-        if [ -n "$NR_SA" ]; then
-            RSCP="${QRSRP1} dBm"
-            [[ "$QRSRP2" != "-32768" ]] && RSCP1="RxD ${QRSRP2} dBm"
-            [[ "$QRSRP3" != "-32768" ]] && RSCP="${RSCP}<br />${QRSRP3} dBm"
-            [[ "$QRSRP4" != "-32768" ]] && RSCP1="RxD ${QRSRP4} dBm"
-        else
-            RSCP="${RSRPLTE}"
-            if [ -n "$QRSRP1" ] && [ "$QRSRP1" != "-32768" ]; then
-                RSCP="${RSCP} (4G) dBm<br />${QRSRP1}"
-                if [ -n "$QRSRP2" ] && [ "$QRSRP2" != "-32768" ]; then
-                    RSCP="${RSCP},${QRSRP2}"
-                    [[ "$QRSRP3" != "-32768" ]] && RSCP="${RSCP},${QRSRP3}"
-                    [[ "$QRSRP4" != "-32768" ]] && RSCP="${RSCP},${QRSRP4}"
-                    RSCP="${RSCP} (5G)"
+    OX=$( sendat $ATPORT "AT+QRSRP"  | grep "+QRSRP:"  )
+    QRSRP=$(echo "$OX" | grep -o -i "+QRSRP:[^,]\+,-[0-9]\{1,5\},-[0-9]\{1,5\},-[0-9]\{1,5\}[^ ]*")
+    if [ -n "$QRSRP" ] && [ "$RAT" != "WCDMA" ]; then
+        QRSRP1=$(echo $QRSRP | cut -d, -f1 | grep -o "[-0-9]\+")
+        QRSRP2=$(echo $QRSRP | cut -d, -f2)
+        QRSRP3=$(echo $QRSRP | cut -d, -f3)
+        QRSRP4=$(echo $QRSRP | cut -d, -f4)
+        QRSRPtype=$(echo $QRSRP | cut -d, -f5)
+        if [ "$QRSRPtype" == "NR5G" ]; then
+            if [ -n "$NR_SA" ]; then
+                RSCP=$QRSRP1
+                if [ -n "$QRSRP2" -a "$QRSRP2" != "-32768" ]; then
+                    RSCP1="RxD "$QRSRP2
+                fi
+                if [ -n "$QRSRP3" -a "$QRSRP3" != "-32768" ]; then
+                    RSCP=$RSCP" dBm<br />"$QRSRP3
+                fi
+                if [ -n "$QRSRP4" -a "$QRSRP4" != "-32768" ]; then
+                    RSCP1="RxD "$QRSRP4
+                fi
+            else
+                RSCP=$RSRPLTE
+                if [ -n "$QRSRP1" -a "$QRSRP1" != "-32768" ]; then
+                    RSCP=$RSCP" (4G) dBm<br />"$QRSRP1
+                    if [ -n "$QRSRP2" -a "$QRSRP2" != "-32768" ]; then
+                        RSCP="$RSCP,$QRSRP2"
+                        if [ -n "$QRSRP3" -a "$QRSRP3" != "-32768" ]; then
+                            RSCP="$RSCP,$QRSRP3"
+                            if [ -n "$QRSRP4" -a "$QRSRP4" != "-32768" ]; then
+                                RSCP="$RSCP,$QRSRP4"
+                            fi
+                        fi
+                        RSCP=$RSCP" (5G) "
+                    fi
                 fi
             fi
-        fi
-    elif [ "${QRSRP2}${QRSRP3}${QRSRP4}" != "-44-44-44" ] && [ -z "$QENG5" ]; then
-        RSCP="${QRSRP1} dBm"
-        if [ "${QRSRP3}${QRSRP4}" == "-140-140" ] || [ "${QRSRP3}${QRSRP4}" == "-44-44" ] || [ "${QRSRP3}${QRSRP4}" == "-32768-32768" ]; then
-            RSCP1="RxD ${QRSRP2} dBm"
-        else
-            RSCP="${RSCP} (RxD ${QRSRP2} dBm)<br />${QRSRP3} dBm"
-            RSCP1="RxD ${QRSRP4} dBm"
+        elif [ "$QRSRP2$QRSRP3$QRSRP4" != "-44-44-44" -a -z "$QENG5" ]; then
+            RSCP=$QRSRP1
+            if [ "$QRSRP3$QRSRP4" == "-140-140" -o "$QRSRP3$QRSRP4" == "-44-44" -o "$QRSRP3$QRSRP4" == "-32768-32768" ]; then
+                RSCP1="RxD "$(echo $QRSRP | cut -d, -f2)
+            else
+                RSCP=$RSCP" dBm (RxD "$QRSRP2" dBm)<br />"$QRSRP3
+                RSCP1="RxD "$QRSRP4
+            fi
         fi
     fi
-fi
 
 
 

@@ -196,9 +196,9 @@ check_firstdns() {
         en1=$(uci -q get modem.@ndis[0].en)
         if [ "$enabled" -eq 1 ] && [ "$en1" -eq 1 ]; then
             echo "------------------------------开启任务---------------------------"
-            urls=("http://wifi.vivo.com.cn/generate_204" "http://www.gstatic.com/generate_204")
+            urls="http://wifi.vivo.com.cn/generate_204 http://www.gstatic.com/generate_204"
             success=0
-            for url in "${urls[@]}"; do
+            for url in $urls; do
                 if curl -4 --interface wwan0 -I "$url" 2>/dev/null | grep -q "HTTP/.* 204"; then
                     echo "网络连接正常"
                     success=1
@@ -227,16 +227,17 @@ check_firstdns() {
 }
 
 
+
 #检测网络状态
 check_dns() {
     en1=$(uci -q get modem.@ndis[0].en)
     if [ "$en1" = '1' ]; then
         echo "------------------------------开启任务---------------------------"
         # 使用 curl 检查 HTTP 状态码
-        urls=("http://wifi.vivo.com.cn/generate_204" "http://www.gstatic.com/generate_204")
+        urls="http://wifi.vivo.com.cn/generate_204 http://www.gstatic.com/generate_204"
         success=0
-        for url in "${urls[@]}"; do
-            if curl -4 --interface wwan0  -I "$url" 2>/dev/null | grep -q "HTTP/.* 204"; then
+        for url in $urls; do
+            if curl -4 --interface wwan0 -I "$url" 2>/dev/null | grep -q "HTTP/.* 204"; then
                 echo "网络连接正常"
                 success=1
                 break
