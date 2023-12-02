@@ -29,104 +29,59 @@ InitData()
 
 }
 #写数据
-# SETData()
-# {
-#     {
-#         echo $Model #'RM520N-GL'
-#         echo $conntype #'conntype'
-#         echo $quectel_device_id
-#         echo $COPS #运营商
-#         echo 'ttyUSB2' #端口
-#         echo $CTEMP #温度
-#         echo 'QMI' #协议 
-#         echo '---------------------------------'
-#         echo $IMEI #imei
-#         echo $IMSI #imsi
-#         echo $ICCID #iccid
-#         echo $phone #phone
-#         echo '---------------------------------'
+SETData()
+{
+    {
+        echo $Model #'RM520N-GL'
+        echo $conntype #'conntype'
+        echo $quectel_device_id
+        echo $COPS #运营商
+        echo 'ttyUSB2' #端口
+        echo $CTEMP #温度
+        echo 'QMI' #协议 
+        echo '---------------------------------'
+        echo $IMEI #imei
+        echo $IMSI #imsi
+        echo $ICCID #iccid
+        echo $phone #phone
+        echo '---------------------------------'
         
-#         echo $MODE
-#         echo $CSQ
-#         echo $CSQ_PER
-#         echo $CSQ_RSSI
-#         echo $ECIO #参考信号接收质量 RSRQ ecio
-#         echo $ECIO1 #参考信号接收质量 RSRQ ecio1
-#         echo $RSCP #参考信号接收功率 RSRP rscp0
-#         echo $RSCP1 #参考信号接收功率 RSRP rscp1
-#         echo $SINR #信噪比 SINR  rv["sinr"]
-#         echo $NETMODE #连接状态监控 rv["netmode"]
-#         echo '---------------------------------'
+        echo $MODE
+        echo $CSQ
+        echo $CSQ_PER
+        echo $CSQ_RSSI
+        echo $ECIO #参考信号接收质量 RSRQ ecio
+        echo $ECIO1 #参考信号接收质量 RSRQ ecio1
+        echo $RSCP #参考信号接收功率 RSRP rscp0
+        echo $RSCP1 #参考信号接收功率 RSRP rscp1
+        echo $SINR #信噪比 SINR  rv["sinr"]
+        echo $NETMODE #连接状态监控 rv["netmode"]
+        echo '---------------------------------'
 
 
-#         echo $COPS_MCC #MCC
-#         echo $$COPS_MNC #MNC
-#         echo $LAC  #eNB ID
-#         echo ''  #LAC_NUM
-#         echo $RNC #TAC
-#         echo '' #RNC_NUM
-#         echo $CID
-#         echo ''  #CID_NUM
-#         echo $LBAND
-#         echo $CHANNEL
-#         echo $PCI
+        echo $COPS_MCC #MCC
+        echo $$COPS_MNC #MNC
+        echo $LAC  #eNB ID
+        echo ''  #LAC_NUM
+        echo $RNC #TAC
+        echo '' #RNC_NUM
+        echo $CID
+        echo ''  #CID_NUM
+        echo $LBAND
+        echo $CHANNEL
+        echo $PCI
 
-#         echo $Date
+        echo $Date
 
 
         
-#         echo $MODTYPE
-#         echo $QTEMP
+        echo $MODTYPE
+        echo $QTEMP
     
-#     } > /tmp/cpe_cell.file
-# }
-
-SETData() {
-    local variables=(
-        "$Model"
-        "$conntype"
-        "$quectel_device_id"
-        "$COPS"
-        "ttyUSB2"
-        "$CTEMP"
-        "QMI"
-        "---------------------------------"
-        "$IMEI"
-        "$IMSI"
-        "$ICCID"
-        "$phone"
-        "---------------------------------"
-        "$MODE"
-        "$CSQ"
-        "$CSQ_PER"
-        "$CSQ_RSSI"
-        "$ECIO"
-        "$ECIO1"
-        "$RSCP"
-        "$RSCP1"
-        "$SINR"
-        "$NETMODE"
-        "---------------------------------"
-        "$COPS_MCC"
-        "$COPS_MNC"
-        "$LAC"
-        ""
-        "$RNC"
-        ""
-        "$CID"
-        ""
-        "$LBAND"
-        "$CHANNEL"
-        "$PCI"
-        "$Date"
-        "$MODTYPE"
-        "$QTEMP"
-    )
-
-    for var in "${variables[@]}"; do
-        echo "${var:-}"
-    done > /tmp/cpe_cell.file
+    } > /tmp/cpe_cell.file
 }
+
+
 
 ATPORT=2
 

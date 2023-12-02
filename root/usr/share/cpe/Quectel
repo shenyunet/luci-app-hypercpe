@@ -357,9 +357,8 @@ fi
 
 
 # 获取网络偏好设置
-OX=$(sendat $ATPORT 'AT+QNWPREFCFG="mode_pref"' | grep "+QNWPREFCFG:")
-QNWP=$(echo $OX | awk -F, '/+QNWPREFCFG: "MODE_PREF"/ {print $2}')
-
+OX=$( sendat $ATPORT 'AT+QNWPREFCFG="mode_pref"'  | grep "+QNWPREFCFG:"  )
+QNWP=$(echo $OX | grep -o -i "+QNWPREFCFG: \"MODE_PREF\",[A-Z5:]\+" | cut -d, -f2)
 # 获取温度信息
 OX=$(sendat $ATPORT 'AT+QTEMP' | grep "+QTEMP:")
 # 尝试解析不同的温度格式
