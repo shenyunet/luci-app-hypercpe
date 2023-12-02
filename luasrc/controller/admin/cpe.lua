@@ -45,145 +45,121 @@ function action_send_atcmd()
 
 end
 
+-- function action_get_csq()
+-- 	local file
+-- 	stat = "/tmp/cpe_cell.file"
+-- 	file = io.open(stat, "r")
+-- 	local rv ={}
+
+
+	
+--     rv["modem"] = file:read("*line")
+-- 	rv["conntype"] = file:read("*line")
+-- 	rv["modid"] = file:read("*line")
+-- 	rv["cops"] = file:read("*line")
+-- 	rv["port"] = file:read("*line")
+-- 	rv["tempur"] = file:read("*line")
+-- 	rv["proto"] = file:read("*line")
+-- 	file:read("*line")
+
+
+
+-- 	rv["imei"] = file:read("*line")
+-- 	rv["imsi"] = file:read("*line")
+-- 	rv["iccid"] =file:read("*line")
+-- 	rv["phone"] = file:read("*line")
+-- 	file:read("*line")
+
+
+
+-- 	rv["mode"] = file:read("*line")
+-- 	rv["csq"] = file:read("*line")
+-- 	rv["per"] = file:read("*line")
+-- 	rv["rssi"] = file:read("*line")
+-- 	rv["ecio"] = file:read("*line")
+-- 	rv["ecio1"] = file:read("*line")
+-- 	rv["rscp"] = file:read("*line")
+-- 	rv["rscp1"] = file:read("*line")
+-- 	rv["sinr"] = file:read("*line")
+-- 	rv["netmode"] = file:read("*line")
+-- 	file:read("*line")
+	
+-- 	rssi = rv["rssi"]
+-- 	ecio = rv["ecio"]
+-- 	rscp = rv["rscp"]
+-- 	ecio1 = rv["ecio1"]
+-- 	rscp1 = rv["rscp1"]
+-- 	if ecio == nil then
+-- 		ecio = "-"
+-- 	end
+-- 	if ecio1 == nil then
+-- 		ecio1 = "-"
+-- 	end
+-- 	if rscp == nil then
+-- 		rscp = "-"
+-- 	end
+-- 	if rscp1 == nil then
+-- 		rscp1 = "-"
+-- 	end
+
+-- 	if ecio ~= "-" then
+-- 		rv["ecio"] = ecio .. " dB"
+-- 	end
+-- 	if rscp ~= "-" then
+-- 		rv["rscp"] = rscp .. " dBm"
+-- 	end
+-- 	if ecio1 ~= " " then
+-- 		rv["ecio1"] = " (" .. ecio1 .. " dB)"
+-- 	end
+-- 	if rscp1 ~= " " then
+-- 		rv["rscp1"] = " (" .. rscp1 .. " dBm)"
+-- 	end
+
+-- 	rv["mcc"] = file:read("*line")
+-- 	rv["mnc"] = file:read("*line")
+--     rv["rnc"] = file:read("*line")
+-- 	rv["rncn"] = file:read("*line")
+-- 	rv["lac"] = file:read("*line")
+-- 	rv["lacn"] = file:read("*line")
+-- 	rv["cid"] = file:read("*line")
+-- 	rv["cidn"] = file:read("*line")
+-- 	rv["lband"] = file:read("*line")
+-- 	rv["channel"] = file:read("*line")
+-- 	rv["pci"] = file:read("*line")
+
+-- 	rv["date"] = file:read("*line")
+
+-- 	rv["crate"] = translate("快速(每5秒更新一次)")
+-- 	luci.http.prepare_content("application/json")
+-- 	luci.http.write_json(rv)
+-- end
+
 function action_get_csq()
-	local file
-	stat = "/tmp/cpe_cell.file"
-	file = io.open(stat, "r")
-	local rv ={}
+    local stat = "/tmp/cpe_cell.file"
+    local file = io.open(stat, "r")
 
-	-- echo 'RM520N-GL'
-	-- echo 'conntype'
-	-- echo '1e0e:9001'
-	-- echo $COPS #运营商
-	-- echo '' #端口
-	-- echo '' #温度
-	-- echo '' #协议 
-    rv["modem"] = file:read("*line")
-	rv["conntype"] = file:read("*line")
-	rv["modid"] = file:read("*line")
-	rv["cops"] = file:read("*line")
-	rv["port"] = file:read("*line")
-	rv["tempur"] = file:read("*line")
-	rv["proto"] = file:read("*line")
-	file:read("*line")
+    -- 检查文件是否成功打开
+    if not file then
+        -- 处理文件打开失败的情况
+        return
+    end
 
+    local rv = {}
+    local keys = {"modem", "conntype", "modid", "cops", "port", "tempur", "proto", "skip", "imei", "imsi", "iccid", "phone", "skip", "mode", "csq", "per", "rssi", "ecio", "ecio1", "rscp", "rscp1", "sinr", "netmode", "skip", "mcc", "mnc", "rnc", "rncn", "lac", "lacn", "cid", "cidn", "lband", "channel", "pci", "date", "crate"}
 
-	-- echo $IMEI #imei
-	-- echo $IMSI #imsi
-	-- echo $ICCID #iccid
-	-- echo $phone #phone
-	rv["imei"] = file:read("*line")
-	rv["imsi"] = file:read("*line")
-	rv["iccid"] =file:read("*line")
-	rv["phone"] = file:read("*line")
-	file:read("*line")
+    for i, key in ipairs(keys) do
+        local value = file:read("*line")
+        -- 跳过分隔行
+        if key ~= "skip" then
+            rv[key] = value or "" -- 使用空字符串替换 nil（未设置或空行）
+        end
+    end
 
+    file:close()
 
-	-- echo $MODE
-	-- echo $CSQ
-	-- echo $CSQ_PER
-	-- echo $CSQ_RSSI
-	-- echo '' #参考信号接收质量 RSRQ ecio
-	-- echo '' #参考信号接收质量 RSRQ ecio1
-	-- echo '' #参考信号接收功率 RSRP rscp
-	-- echo '' #参考信号接收功率 RSRP rscp1
-	-- echo '' #信噪比 SINR  rv["sinr"]
-	-- echo '' #连接状态监控 rv["netmode"]
-	rv["mode"] = file:read("*line")
-	rv["csq"] = file:read("*line")
-	rv["per"] = file:read("*line")
-	rv["rssi"] = file:read("*line")
-	rv["ecio"] = file:read("*line")
-	rv["ecio1"] = file:read("*line")
-	rv["rscp"] = file:read("*line")
-	rv["rscp1"] = file:read("*line")
-	rv["sinr"] = file:read("*line")
-	rv["netmode"] = file:read("*line")
-	file:read("*line")
-	
-	rssi = rv["rssi"]
-	ecio = rv["ecio"]
-	rscp = rv["rscp"]
-	ecio1 = rv["ecio1"]
-	rscp1 = rv["rscp1"]
-	if ecio == nil then
-		ecio = "-"
-	end
-	if ecio1 == nil then
-		ecio1 = "-"
-	end
-	if rscp == nil then
-		rscp = "-"
-	end
-	if rscp1 == nil then
-		rscp1 = "-"
-	end
+    -- 设置额外的字段
+    rv["crate"] = translate("快速(每5秒更新一次)")
 
-	if ecio ~= "-" then
-		rv["ecio"] = ecio .. " dB"
-	end
-	if rscp ~= "-" then
-		rv["rscp"] = rscp .. " dBm"
-	end
-	if ecio1 ~= " " then
-		rv["ecio1"] = " (" .. ecio1 .. " dB)"
-	end
-	if rscp1 ~= " " then
-		rv["rscp1"] = " (" .. rscp1 .. " dBm)"
-	end
-
-	rv["mcc"] = file:read("*line")
-	rv["mnc"] = file:read("*line")
-    rv["rnc"] = file:read("*line")
-	rv["rncn"] = file:read("*line")
-	rv["lac"] = file:read("*line")
-	rv["lacn"] = file:read("*line")
-	rv["cid"] = file:read("*line")
-	rv["cidn"] = file:read("*line")
-	rv["lband"] = file:read("*line")
-	rv["channel"] = file:read("*line")
-	rv["pci"] = file:read("*line")
-
-	rv["date"] = file:read("*line")
-	
-	-- rv["phonen"] = file:read("*line")
-	--rv["host"] = "0"
-
-	-- rv["simerr"] = "0"
-	-- 
-	-- 
-	-- 
-	-- 
-	-- 
-	-- 
-	-- 
-	-- 
-	-- 
-	-- 
-
-	
-	-- rv["down"] = file:read("*line")
-	-- rv["up"] = file:read("*line")
-	-- 
-	-- 
-
-	-- 
-	-- rv["cell"] = file:read("*line")
-	-- rv["modtype"] = file:read("*line")
-	-- 
-	-- 
-	-- 
-	-- 
-	-- 
-	-- 
-
-
-	-- rv["lat"] = "-"
-	-- rv["long"] = "-"	
-
-
-
-	rv["crate"] = translate("快速(每5秒更新一次)")
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(rv)
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(rv)
 end
